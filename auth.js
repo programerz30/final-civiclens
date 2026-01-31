@@ -1,50 +1,68 @@
 // ============================================
-// AUTHENTICATION SYSTEM
+// EMAILJS CONFIGURATION - WITH YOUR KEYS!
 // ============================================
 
-// Global variables
-let currentUser = null;
-let otpCode = null;
-let otpEmail = null;
+// EmailJS Configuration - USING YOUR PROVIDED KEYS
+const EMAILJS_CONFIG = {
+    SERVICE_ID: "service_r60hbpq",      // Your Service ID
+    TEMPLATE_ID: "template_8hjqxzg",    // Your Template ID
+    PUBLIC_KEY: "Cr8Skylldo6vUX6ae"     // Your Public Key from image
+};
 
 // Initialize EmailJS
 (function() {
-    if (typeof emailjs !== 'undefined') {
-        emailjs.init("Cr8Skylldo6vUX6ae");
+    if (EMAILJS_CONFIG.PUBLIC_KEY) {
+        emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+        console.log("✅ EmailJS initialized with Public Key:", EMAILJS_CONFIG.PUBLIC_KEY);
+    } else {
+        console.warn("⚠️ EmailJS Public Key not configured");
     }
 })();
 
 // ============================================
-// INITIALIZATION
+// AUTHENTICATION SYSTEM WITH OTP
 // ============================================
+
+// User storage
+const users = JSON.parse(localStorage.getItem('benefit_users') || '{}');
+let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+
+// OTP variables
+let otpCode = null;
+let otpExpiry = null;
+let pendingUser = null;
+let otpTimer = null;
+
+// Initialize auth on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is already logged in
+    console.log('Benefit Portal Loading...');
+    console.log('EmailJS Config:', EMAILJS_CONFIG);
+    
+    // Check if user is logged in
     checkAuthStatus();
     
-    // Setup event listeners
-    setupEventListeners();
+    // Setup auth event listeners
+    setupAuthEvents();
+    
+    // Setup OTP input handling
+    setupOTPInputs();
+    
+    // Clear any pending OTP sessions
+    localStorage.removeItem('pending_otp');
 });
 
 // Check authentication status
 function checkAuthStatus() {
-    const savedUser = localStorage.getItem('benefitUser');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            if (currentUser && currentUser.email) {
-                showMainApp();
-                return;
-            }
-        } catch (e) {
-            console.error('Error parsing user data:', e);
-            localStorage.removeItem('benefitUser');
-        }
+    if (currentUser) {
+        showMainApp();
+        autoFillUserData(currentUser);
+    } else {
+        showLogin();
     }
-    showLogin();
 }
 
-// Setup all event listeners
-function setupEventListeners() {
+// Setup auth event listeners
+function setupAuthEvents() {
     // Login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
@@ -99,26 +117,9 @@ function setupEventListeners() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logoutUser);
     }
-    
-    // OTP input auto-submit
-    const otpInput = document.getElementById('otpCode');
-    if (otpInput) {
-        otpInput.addEventListener('input', function() {
-            // Only allow numbers
-            this.value = this.value.replace(/\D/g, '');
-            
-            // Auto-submit when 6 digits
-            if (this.value.length === 6) {
-                document.getElementById('otpForm').dispatchEvent(new Event('submit'));
-            }
-        });
-    }
 }
 
-// ============================================
-// UI FUNCTIONS
-// ============================================
-
+// Show login form
 function showLogin() {
     document.getElementById('authContainer').style.display = 'block';
     document.getElementById('mainApp').style.display = 'none';
@@ -138,6 +139,7 @@ function showLogin() {
     }, 100);
 }
 
+// Show signup form
 function showSignup() {
     document.getElementById('authContainer').style.display = 'block';
     document.getElementById('mainApp').style.display = 'none';
@@ -157,6 +159,7 @@ function showSignup() {
     }, 100);
 }
 
+// Show OTP verification
 function showOTP(email) {
     document.getElementById('authContainer').style.display = 'block';
     document.getElementById('mainApp').style.display = 'none';
@@ -168,18 +171,21 @@ function showOTP(email) {
     
     // Display email
     document.getElementById('otpEmailDisplay').textContent = email;
-    otpEmail = email;
     
     // Clear OTP input
-    const otpInput = document.getElementById('otpCode');
-    if (otpInput) otpInput.value = '';
+    document.getElementById('otpCode').value = '';
     
-    // Focus
+    // Start OTP timer
+    startOTPTimer();
+    
+    // Focus on OTP input
     setTimeout(() => {
+        const otpInput = document.getElementById('otpCode');
         if (otpInput) otpInput.focus();
     }, 100);
 }
 
+// Show main application
 function showMainApp() {
     document.getElementById('authContainer').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
@@ -191,7 +197,7 @@ function showMainApp() {
         greeting.innerHTML = `<i class="fas fa-user-circle me-2"></i>${currentUser.name}`;
     }
     
-    // Auto-fill form if available
+    // Auto-fill form
     if (currentUser) {
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
@@ -203,10 +209,7 @@ function showMainApp() {
     }
 }
 
-// ============================================
-// FORM HANDLERS
-// ============================================
-
+// Handle login
 async function handleLogin(e) {
     e.preventDefault();
     
@@ -257,6 +260,7 @@ async function handleLogin(e) {
     }
 }
 
+// Handle signup
 async function handleSignup(e) {
     e.preventDefault();
     
@@ -323,12 +327,7 @@ async function handleSignup(e) {
             date: new Date().toLocaleDateString()
         };
         
-        // Make sure EmailJS is initialized
-        if (typeof emailjs === 'undefined') {
-            throw new Error('EmailJS not loaded');
-        }
-        
-        await emailjs.send('service_r60hbpq', 'template_8hjqxzg', templateParams);
+        await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
         
         // Store temp user in localStorage
         localStorage.setItem('tempUser', JSON.stringify(tempUser));
@@ -364,6 +363,39 @@ async function handleSignup(e) {
     }
 }
 
+// Setup OTP inputs
+function setupOTPInputs() {
+    const otpInput = document.getElementById('otpCode');
+    if (otpInput) {
+        otpInput.addEventListener('input', function() {
+            // Only allow numbers
+            this.value = this.value.replace(/\D/g, '');
+            
+            // Auto-submit when 6 digits
+            if (this.value.length === 6) {
+                document.getElementById('otpForm').dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        otpInput.addEventListener('keydown', function(e) {
+            // Allow backspace, delete, tab, etc.
+            if ([8, 9, 13, 27, 46].includes(e.keyCode) || 
+                (e.keyCode >= 37 && e.keyCode <= 40)) {
+                return;
+            }
+            
+            // Allow numbers
+            if ((e.keyCode >= 48 && e.keyCode <= 57) || 
+                (e.keyCode >= 96 && e.keyCode <= 105)) {
+                return;
+            }
+            
+            e.preventDefault();
+        });
+    }
+}
+
+// Handle OTP verification
 async function handleOTPVerification(e) {
     e.preventDefault();
     
@@ -431,6 +463,38 @@ async function handleOTPVerification(e) {
     }
 }
 
+// Start OTP timer
+function startOTPTimer() {
+    clearInterval(otpTimer);
+    
+    const timerElement = document.getElementById('otpTimer');
+    const resendElement = document.getElementById('resendOtpText');
+    
+    // Show timer, hide resend
+    if (timerElement) timerElement.style.display = 'block';
+    if (resendElement) resendElement.style.display = 'none';
+    
+    let timeLeft = 120; // 2 minutes in seconds
+    
+    otpTimer = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        if (timerElement) {
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+            clearInterval(otpTimer);
+            if (timerElement) timerElement.style.display = 'none';
+            if (resendElement) resendElement.style.display = 'block';
+        }
+    }, 1000);
+}
+
+// Resend OTP
 async function resendOTP() {
     if (!otpEmail) {
         alert('No email found. Please start signup again.');
@@ -460,7 +524,7 @@ async function resendOTP() {
         };
         
         if (typeof emailjs !== 'undefined') {
-            await emailjs.send('service_r60hbpq', 'template_8hjqxzg', templateParams);
+            await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
             alert('New OTP sent to your email!');
         } else {
             // Demo mode
@@ -471,6 +535,9 @@ async function resendOTP() {
         // Reset OTP input
         document.getElementById('otpCode').value = '';
         document.getElementById('otpCode').focus();
+        
+        // Restart timer
+        startOTPTimer();
         
     } catch (error) {
         console.error('Resend OTP error:', error);
@@ -484,6 +551,7 @@ async function resendOTP() {
     }
 }
 
+// Logout user
 function logoutUser() {
     // Clear current user
     currentUser = null;
@@ -509,15 +577,323 @@ function logoutUser() {
     showLogin();
 }
 
-// ============================================
-// PUBLIC FUNCTIONS (for other scripts)
-// ============================================
-function getCurrentUser() {
-    return currentUser;
+// Auto-fill user data in form
+function autoFillUserData(user) {
+    const nameField = document.getElementById('name');
+    const emailField = document.getElementById('email');
+    
+    if (nameField && !nameField.value) {
+        nameField.value = user.name || '';
+    }
+    if (emailField && !emailField.value) {
+        emailField.value = user.email || '';
+    }
 }
 
-function isAuthenticated() {
-    return currentUser !== null;
+// ============================================
+// ORIGINAL APPLICATION CODE (UNCHANGED)
+// ============================================
+
+const N8N_WEBHOOK_URL = 'https://mohitpillai12346.app.n8n.cloud/webhook/9f091cf5-2629-4342-8b07-41c42601028b';
+let uploadedFiles = {
+    applicationPdf: null,
+    supportingPdf: null
+};
+
+// Handle Application PDF upload
+document.getElementById('applicationPdf').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.type !== 'application/pdf') {
+            alert('Please upload a PDF file');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File too large. Maximum 5MB.');
+            return;
+        }
+        
+        uploadedFiles.applicationPdf = file;
+        displayFile('applicationFileList', file, 'application');
+    }
+});
+
+// Handle Supporting PDF upload
+document.getElementById('supportingPdf').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.type !== 'application/pdf') {
+            alert('Please upload a PDF file');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File too large. Maximum 5MB.');
+            return;
+        }
+        
+        uploadedFiles.supportingPdf = file;
+        displayFile('supportingFileList', file, 'supporting');
+    }
+});
+
+// Display uploaded file
+function displayFile(containerId, file, type) {
+    const container = document.getElementById(containerId);
+    const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+    
+    container.innerHTML = `
+        <div class="file-item">
+            <i class="fas fa-file-pdf text-danger me-2"></i>
+            <span>${file.name} (${fileSize} MB)</span>
+            <button type="button" class="btn btn-sm btn-link text-danger ms-2" onclick="removeFile('${type}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
 }
 
-console.log('Authentication system loaded successfully');
+// Remove file
+function removeFile(type) {
+    if (type === 'application') {
+        uploadedFiles.applicationPdf = null;
+        document.getElementById('applicationPdf').value = '';
+        document.getElementById('applicationFileList').innerHTML = '';
+    } else {
+        uploadedFiles.supportingPdf = null;
+        document.getElementById('supportingPdf').value = '';
+        document.getElementById('supportingFileList').innerHTML = '';
+    }
+}
+
+// MAIN FUNCTION: SEND TO N8N
+async function submitToN8n() {
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const issueType = document.getElementById('issueType').value;
+    
+    if (!name || !email || !issueType) {
+        alert('Please fill all required fields');
+        return;
+    }
+    
+    if (!uploadedFiles.applicationPdf) {
+        alert('Please upload the Application Form PDF');
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('email', email);
+        formData.append('issueType', issueType);
+        formData.append('applicationPdf', uploadedFiles.applicationPdf);
+        
+        if (uploadedFiles.supportingPdf) {
+            formData.append('supportingPdf', uploadedFiles.supportingPdf);
+        }
+        
+        console.log('Sending to n8n...');
+        
+        const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('n8n error response:', errorText);
+            throw new Error(`Server returned error: ${response.status}`);
+        }
+        
+        const responseText = await response.text();
+        console.log('n8n response:', responseText);
+        
+        displayResponse(responseText, name, email, issueType);
+        
+    } catch (error) {
+        console.error('Error connecting to n8n:', error);
+        showError(`Cannot connect to processing system. Error: ${error.message}`);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+// DISPLAY RESPONSE
+function displayResponse(responseText, name, email, issueType) {
+    const resultBox = document.getElementById('resultBox');
+    const resultHeader = document.getElementById('resultHeader');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultDescription = document.getElementById('resultDescription');
+    const applicantInfo = document.getElementById('applicantInfo');
+    const documentsInfo = document.getElementById('documentsInfo');
+    const applicationId = document.getElementById('applicationId');
+    
+    // Generate ID
+    const appId = 'APP-' + Date.now().toString().slice(-6);
+    applicationId.textContent = `Reference: ${appId}`;
+    
+    // Set basic info
+    applicantInfo.innerHTML = `
+        <strong>Name:</strong> ${name}<br>
+        <strong>Email:</strong> ${email}<br>
+        <strong>Assistance Type:</strong> ${issueType}
+    `;
+    
+    // Set documents info
+    let docsHtml = `✓ Application Form: ${uploadedFiles.applicationPdf.name}`;
+    if (uploadedFiles.supportingPdf) {
+        docsHtml += `<br>✓ Supporting Document: ${uploadedFiles.supportingPdf.name}`;
+    }
+    documentsInfo.innerHTML = docsHtml;
+    
+    // Process ONLY the n8n response
+    resultHeader.className = 'card-header bg-light';
+    resultTitle.innerHTML = 'Application Analysis';
+    resultTitle.className = 'h3 text-dark';
+    
+    // Try JSON first
+    try {
+        const data = JSON.parse(responseText);
+        
+        // Get explanation from n8n response
+        let explanation = '';
+        if (data.explanation) {
+            explanation = data.explanation;
+        } else if (data.message) {
+            explanation = data.message;
+        } else if (data.text) {
+            explanation = data.text;
+        } else if (data.reason) {
+            explanation = data.reason;
+        } else {
+            // If no clear explanation field, show the whole JSON
+            explanation = JSON.stringify(data, null, 2);
+        }
+        
+        // Display explanation from n8n
+        resultDescription.innerHTML = formatText(explanation);
+        
+        // Display factors from n8n
+        const factorsList = document.getElementById('factorsList');
+        if (data.factors && Array.isArray(data.factors)) {
+            factorsList.innerHTML = data.factors.map(factor => `
+                <div class="list-group-item">
+                    <strong>${factor.name || 'Factor'}:</strong> ${factor.description || ''}
+                </div>
+            `).join('');
+        } else {
+            factorsList.innerHTML = `
+                <div class="list-group-item">
+                    <em>Analysis complete</em>
+                </div>
+            `;
+        }
+        
+        // Display next steps from n8n
+        const nextSteps = document.getElementById('nextSteps');
+        if (data.nextSteps && Array.isArray(data.nextSteps)) {
+            nextSteps.innerHTML = data.nextSteps.map(step => `
+                <li class="list-group-item">${step}</li>
+            `).join('');
+        } else {
+            nextSteps.innerHTML = `
+                <li class="list-group-item">Await official communication</li>
+            `;
+        }
+        
+    } catch (e) {
+        // If not JSON, display as plain text from n8n
+        console.log('Displaying n8n response as plain text');
+        
+        resultDescription.innerHTML = formatText(responseText);
+        
+        document.getElementById('factorsList').innerHTML = `
+            <div class="list-group-item">
+                <em>Response received</em>
+            </div>
+        `;
+        
+        document.getElementById('nextSteps').innerHTML = `
+            <li class="list-group-item">Review the explanation above</li>
+        `;
+    }
+    
+    // Show result
+    resultBox.style.display = 'block';
+    resultBox.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Simple text formatting
+function formatText(text) {
+    if (!text) return '<p class="text-muted">No response from processing system.</p>';
+    
+    return text
+        .replace(/\\n/g, '\n')
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+// ERROR HANDLING
+function showError(message) {
+    const errorBox = document.getElementById('errorBox');
+    errorBox.innerHTML = `
+        <div class="alert alert-danger">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>System Error</h6>
+            <p>${message}</p>
+            <p class="mb-0 small">Check if n8n workflow is active and accepts multipart/form-data.</p>
+        </div>
+    `;
+    errorBox.style.display = 'block';
+}
+
+// Reset form
+function resetForm() {
+    document.getElementById('benefitForm').reset();
+    uploadedFiles = { applicationPdf: null, supportingPdf: null };
+    document.getElementById('applicationFileList').innerHTML = '';
+    document.getElementById('supportingFileList').innerHTML = '';
+    document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+}
+
+// Form submission handler
+document.getElementById('benefitForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    submitToN8n();
+});
+
+// ============================================
+// INITIALIZATION MESSAGE
+// ============================================
+console.log('Benefit Portal initialized');
+console.log('N8N Webhook URL:', N8N_WEBHOOK_URL);
+console.log('✅ EmailJS Service ID:', EMAILJS_CONFIG.SERVICE_ID);
+console.log('✅ EmailJS Template ID:', EMAILJS_CONFIG.TEMPLATE_ID);
+console.log('✅ EmailJS Public Key configured');
+
+// Test n8n connection on page load
+async function testN8nConnection() {
+    try {
+        console.log('Testing n8n connection...');
+        const testResponse = await fetch(N8N_WEBHOOK_URL, { 
+            method: 'HEAD',
+            mode: 'no-cors'
+        });
+        console.log('✅ n8n endpoint reachable');
+    } catch (error) {
+        console.warn('⚠️ Cannot reach n8n endpoint. Make sure:');
+        console.warn('1. n8n workflow is active (green toggle)');
+        console.warn('2. Webhook URL is correct');
+    }
+}
+
+// Uncomment to test connection on load
+// testN8nConnection();
