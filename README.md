@@ -32,8 +32,8 @@ project/
 1. Download the files
 2. Open index.html in a browser
 3. Login with:
-   - Email: test@example.com
-   - Password: password123
+   - Email: demo@example.com
+   - Password: demo123
 
 Or use a local server:
 bash
