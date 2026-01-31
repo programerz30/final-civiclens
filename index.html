@@ -3,37 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Benefit Eligibility Portal</title>
+    <title>Benefit Eligibility Checker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Auth Styles */
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            background: white;
-        }
-        .auth-box {
-            display: none;
-        }
-        .otp-input {
-            letter-spacing: 10px;
-            font-size: 24px;
-            text-align: center;
-            padding: 15px;
-        }
-        .user-navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 0;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        /* Original App Styles */
-        .main-app { display: none; }
         .result-box { display: none; }
         .loading { display: none; }
         .file-upload-area { 
@@ -55,132 +28,111 @@
             border-radius: 4px;
             margin-bottom: 5px;
         }
+        /* Auth Styles */
+        .auth-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .auth-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        /* OTP Input Styles */
+        .otp-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .resend-otp {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+        }
+        .resend-otp:hover {
+            color: #0056b3;
+        }
+        .otp-timer {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <!-- User Navbar (Shows when logged in) -->
-    <nav id="userNavbar" class="user-navbar" style="display: none;">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Benefit Eligibility Portal</h4>
-                </div>
-                <div class="d-flex align-items-center">
-                    <span class="me-3" id="userGreeting"></span>
-                    <button id="logoutBtn" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Authentication Container -->
-    <div id="authContainer">
-        <!-- Login Box -->
-        <div id="loginBox" class="auth-container">
-            <div class="text-center mb-4">
-                <h2><i class="fas fa-lock text-primary"></i></h2>
-                <h3>Welcome Back</h3>
-                <p class="text-muted">Sign in to access the benefit portal</p>
+    <!-- Auth Header -->
+    <div class="auth-header">
+        <div class="container auth-container">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-landmark fa-lg me-2"></i>
+                <h4 class="mb-0">Benefit Eligibility Portal</h4>
             </div>
             
-            <form id="loginForm">
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="loginEmail" placeholder="your@email.com" required>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
-                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                </button>
-                <p class="text-center">
-                    Don't have an account? 
-                    <a href="#" id="showSignup" class="text-decoration-none fw-bold">Create Account</a>
-                </p>
-            </form>
-        </div>
-
-        <!-- Signup Box -->
-        <div id="signupBox" class="auth-container auth-box">
-            <div class="text-center mb-4">
-                <h2><i class="fas fa-user-plus text-success"></i></h2>
-                <h3>Create Account</h3>
-                <p class="text-muted">Register to submit benefit applications</p>
-            </div>
-            
-            <form id="signupForm">
-                <div class="mb-3">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="signupName" placeholder="John Doe" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="signupEmail" placeholder="your@email.com" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="signupPassword" placeholder="At least 6 characters" required minlength="6">
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">Confirm Password</label>
-                    <input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm your password" required>
-                </div>
-                <button type="submit" class="btn btn-success btn-lg w-100 mb-3">
-                    <i class="fas fa-user-plus me-2"></i>Create Account
-                </button>
-                <p class="text-center">
-                    Already have an account? 
-                    <a href="#" id="showLogin" class="text-decoration-none fw-bold">Sign In</a>
-                </p>
-            </form>
-        </div>
-
-        <!-- OTP Box -->
-        <div id="otpBox" class="auth-container auth-box">
-            <div class="text-center mb-4">
-                <h2><i class="fas fa-mail-bulk text-warning"></i></h2>
-                <h3>Verify Your Email</h3>
-                <p class="text-muted">We've sent a 6-digit code to:</p>
-                <h5 id="otpEmailDisplay" class="fw-bold"></h5>
-            </div>
-            
-            <form id="otpForm">
-                <div class="mb-4">
-                    <label class="form-label">Enter OTP Code</label>
-                    <input type="text" class="form-control otp-input" id="otpCode" 
-                           maxlength="6" pattern="\d{6}" placeholder="000000" required>
-                    <small class="text-muted">Enter the 6-digit code sent to your email</small>
-                </div>
-                <button type="submit" class="btn btn-warning btn-lg w-100 mb-3">
-                    <i class="fas fa-check-circle me-2"></i>Verify OTP
-                </button>
-                <div class="text-center">
-                    <button type="button" id="resendOtpBtn" class="btn btn-link">
-                        <i class="fas fa-redo me-2"></i>Resend OTP
+            <div class="user-info">
+                <!-- When logged out -->
+                <div id="loginSection">
+                    <button class="btn btn-light btn-sm" onclick="showLogin()">
+                        <i class="fas fa-sign-in-alt me-1"></i>Sign In
                     </button>
-                    <button type="button" id="backToSignup" class="btn btn-link">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Signup
+                    <button class="btn btn-outline-light btn-sm ms-2" onclick="showSignup()">
+                        <i class="fas fa-user-plus me-1"></i>Sign Up
                     </button>
                 </div>
-            </form>
+                
+                <!-- When logged in -->
+                <div id="userSection" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div>
+                            <span id="userName" class="me-2">User</span>
+                            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Main Application -->
-    <div id="mainApp" class="container mt-4 main-app">
-        <h1 class="text-center mb-4">🏛️ Benefit Eligibility Portal</h1>
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">🏛️ Submit Your Application</h1>
         
-        <!-- Your Original Application Form (unchanged) -->
+        <!-- Input Form -->
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h4>Submit Your Application</h4>
+                <h4>Benefit Application Form</h4>
             </div>
             <div class="card-body">
                 <form id="benefitForm">
+                    <!-- Basic Info -->
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Full Name *</label>
@@ -192,6 +144,7 @@
                         </div>
                     </div>
                     
+                    <!-- Issue Type -->
                     <div class="mb-4">
                         <label class="form-label">Type of Assistance Needed *</label>
                         <select class="form-control" id="issueType" required>
@@ -204,6 +157,7 @@
                         </select>
                     </div>
                     
+                    <!-- PDF Upload 1: Application Form -->
                     <div class="mb-4">
                         <label class="form-label fw-bold">1. Upload Application Form (PDF) *</label>
                         <p class="text-muted">This should include your completed application with income, household details, and personal information.</p>
@@ -219,6 +173,7 @@
                         <div class="file-list" id="applicationFileList"></div>
                     </div>
                     
+                    <!-- PDF Upload 2: Supporting Documents -->
                     <div class="mb-4">
                         <label class="form-label fw-bold">2. Upload Supporting Documents (PDF)</label>
                         <p class="text-muted">Optional: Medical certificates, income proofs, ID cards, etc.</p>
@@ -234,6 +189,7 @@
                         <div class="file-list" id="supportingFileList"></div>
                     </div>
                     
+                    <!-- Submit Button -->
                     <button type="submit" class="btn btn-primary btn-lg w-100">
                         <i class="fas fa-paper-plane me-2"></i>Submit Application
                     </button>
@@ -260,12 +216,14 @@
                 <h4>Application Decision</h4>
             </div>
             <div class="card-body">
+                <!-- Status -->
                 <div class="text-center mb-4">
                     <h1 id="resultTitle" class="display-4"></h1>
                     <p id="resultDescription" class="lead"></p>
                     <p class="text-muted" id="applicationId"></p>
                 </div>
                 
+                <!-- Summary -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card">
@@ -285,16 +243,19 @@
                     </div>
                 </div>
                 
+                <!-- Decision Factors -->
                 <div class="mb-4">
                     <h5><i class="fas fa-search me-2"></i>How We Made This Decision</h5>
                     <div id="factorsList" class="list-group"></div>
                 </div>
                 
+                <!-- Next Steps -->
                 <div class="mb-4">
                     <h5><i class="fas fa-list-check me-2"></i>Next Steps</h5>
                     <ul id="nextSteps" class="list-group"></ul>
                 </div>
                 
+                <!-- Contact & Actions -->
                 <div class="d-flex justify-content-between mt-4">
                     <button onclick="resetForm()" class="btn btn-outline-secondary">
                         <i class="fas fa-redo me-2"></i>Submit Another Application
@@ -310,16 +271,951 @@
         <div id="errorBox" class="alert alert-danger mt-4" style="display: none;"></div>
     </div>
 
-    <!-- Scripts -->
-    <!-- Bootstrap -->
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign In</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="loginEmail" placeholder="example@email.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="login()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </button>
+                    <div class="text-center mt-3">
+                        <p class="text-muted mb-0">Demo Account:</p>
+                        <p class="small">Email: <code>demo@example.com</code> | Password: <code>demo123</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div class="modal fade" id="signupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="signupName" placeholder="John Doe">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="signupEmail" placeholder="example@email.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="signupPassword" placeholder="••••••••">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-success w-100" onclick="signup()">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div class="modal fade" id="otpModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Verify Your Email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-envelope fa-3x text-primary mb-3"></i>
+                        <p>We've sent a 6-digit OTP to your email</p>
+                        <p class="fw-bold" id="otpEmailDisplay">user@example.com</p>
+                    </div>
+                    
+                    <!-- OTP Input -->
+                    <div class="otp-container">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="1">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="2">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="3">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="4">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="5">
+                        <input type="text" class="form-control otp-input" maxlength="1" data-index="6">
+                    </div>
+                    
+                    <!-- Timer and Resend -->
+                    <div class="text-center mt-4">
+                        <p id="otpTimer" class="otp-timer">02:00</p>
+                        <p id="resendOtpText" class="text-muted" style="display: none;">
+                            Didn't receive the code? 
+                            <span class="resend-otp" onclick="resendOTP()">Resend OTP</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Verify Button -->
+                    <button class="btn btn-primary w-100 mt-3" onclick="verifyOTP()" id="verifyOtpBtn">
+                        <i class="fas fa-check-circle me-2"></i>Verify OTP
+                    </button>
+                    
+                    <!-- Cancel Button -->
+                    <button class="btn btn-outline-secondary w-100 mt-2" onclick="cancelOTP()">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Font Awesome -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <!-- EmailJS -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <!-- Your Original App.js -->
-    <script src="app.js"></script>
-    <!-- New Authentication System -->
-    <script src="auth.js"></script>
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- App JavaScript -->
+    <script>
+        // ============================================
+        // EMAILJS CONFIGURATION - WITH YOUR KEYS
+        // ============================================
+
+        // EmailJS Configuration - USING YOUR PROVIDED KEYS
+        const EMAILJS_CONFIG = {
+            SERVICE_ID: "service_r60hbpq",      // Your Service ID
+            TEMPLATE_ID: "template_8hjqxzg",    // Your Template ID
+            PUBLIC_KEY: "Cr8Skylldo6vUX6ae"     // Your Public Key from image
+        };
+
+        // Initialize EmailJS
+        (function() {
+            if (EMAILJS_CONFIG.PUBLIC_KEY) {
+                emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+                console.log("✅ EmailJS initialized with Public Key:", EMAILJS_CONFIG.PUBLIC_KEY);
+            } else {
+                console.warn("⚠️ EmailJS Public Key not configured");
+            }
+        })();
+
+        // ============================================
+        // AUTHENTICATION SYSTEM WITH OTP
+        // ============================================
+
+        // User storage
+        const users = JSON.parse(localStorage.getItem('benefit_users') || '{}');
+        let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+
+        // OTP variables
+        let otpCode = null;
+        let otpExpiry = null;
+        let pendingUser = null;
+        let otpTimer = null;
+
+        // Initialize auth on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Benefit Portal Loading...');
+            console.log('EmailJS Config:', EMAILJS_CONFIG);
+            
+            // Check if user is logged in
+            checkAuthStatus();
+            
+            // Setup OTP input handling
+            setupOTPInputs();
+            
+            // Clear any pending OTP sessions
+            localStorage.removeItem('pending_otp');
+        });
+
+        // Check authentication status
+        function checkAuthStatus() {
+            if (currentUser) {
+                showUserSection();
+                autoFillUserData(currentUser);
+            } else {
+                showLoginSection();
+            }
+        }
+
+        // Show login section
+        function showLoginSection() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('userSection').style.display = 'none';
+        }
+
+        // Show user section
+        function showUserSection() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('userSection').style.display = 'flex';
+            
+            // Update user info
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            
+            if (currentUser) {
+                userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+                userName.textContent = currentUser.name;
+            }
+        }
+
+        // Auto-fill user data in form
+        function autoFillUserData(user) {
+            const nameField = document.getElementById('name');
+            const emailField = document.getElementById('email');
+            
+            if (nameField && !nameField.value) {
+                nameField.value = user.name || '';
+            }
+            if (emailField && !emailField.value) {
+                emailField.value = user.email || '';
+            }
+        }
+
+        // Show login modal
+        function showLogin() {
+            const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+            modal.show();
+        }
+
+        // Show signup modal
+        function showSignup() {
+            const modal = new bootstrap.Modal(document.getElementById('signupModal'));
+            modal.show();
+        }
+
+        // Login function
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Demo account
+            if (email === 'demo@example.com' && password === 'demo123') {
+                currentUser = {
+                    name: 'Demo User',
+                    email: 'demo@example.com',
+                    avatar: 'D'
+                };
+                localStorage.setItem('current_user', JSON.stringify(currentUser));
+                showUserSection();
+                autoFillUserData(currentUser);
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                if (modal) modal.hide();
+                
+                alert('Welcome back, Demo User!');
+                return;
+            }
+            
+            // Check regular users
+            if (users[email] && users[email].password === password) {
+                currentUser = {
+                    name: users[email].name,
+                    email: email,
+                    avatar: users[email].name.charAt(0).toUpperCase()
+                };
+                localStorage.setItem('current_user', JSON.stringify(currentUser));
+                showUserSection();
+                autoFillUserData(currentUser);
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                if (modal) modal.hide();
+                
+                alert(`Welcome back, ${users[email].name}!`);
+            } else {
+                alert('Invalid email or password. Try demo account:\nEmail: demo@example.com\nPassword: demo123');
+            }
+        }
+
+        // Signup function with OTP
+        async function signup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validation
+            if (!name || !email || !password || !confirmPassword) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            if (users[email]) {
+                alert('Email already registered. Please sign in instead.');
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // Generate OTP
+            otpCode = generateOTP();
+            otpExpiry = Date.now() + 2 * 60 * 1000; // 2 minutes from now
+            
+            // Store pending user data
+            pendingUser = { name, email, password };
+            
+            // Store OTP in localStorage for verification
+            localStorage.setItem('pending_otp', JSON.stringify({
+                code: otpCode,
+                expiry: otpExpiry,
+                email: email
+            }));
+            
+            try {
+                // Send OTP via EmailJS
+                await sendOTPEmail(email, name, otpCode);
+                
+                // Close signup modal
+                const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
+                if (signupModal) signupModal.hide();
+                
+                // Show OTP modal
+                showOTPModal(email);
+                
+            } catch (error) {
+                console.error('Failed to send OTP:', error);
+                
+                // Fallback: Show OTP in console for testing
+                console.log('OTP for testing:', otpCode);
+                alert(`OTP sent to console for testing: ${otpCode}\nCheck browser console (F12 → Console)`);
+                
+                // Close signup modal
+                const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
+                if (signupModal) signupModal.hide();
+                
+                // Show OTP modal anyway
+                showOTPModal(email);
+            }
+        }
+
+        // Generate 6-digit OTP
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Send OTP via EmailJS
+        async function sendOTPEmail(email, name, otp) {
+            // Check if EmailJS is initialized
+            if (typeof emailjs === 'undefined') {
+                throw new Error('EmailJS not loaded');
+            }
+            
+            const templateParams = {
+                to_email: email,
+                to_name: name,
+                otp_code: otp,
+                from_name: "Benefit Portal",
+                reply_to: "noreply@benefitportal.com"
+            };
+            
+            console.log('Sending OTP via EmailJS with params:', {
+                service_id: EMAILJS_CONFIG.SERVICE_ID,
+                template_id: EMAILJS_CONFIG.TEMPLATE_ID,
+                template_params: templateParams
+            });
+            
+            try {
+                const response = await emailjs.send(
+                    EMAILJS_CONFIG.SERVICE_ID,
+                    EMAILJS_CONFIG.TEMPLATE_ID,
+                    templateParams
+                );
+                
+                console.log('✅ OTP sent successfully:', response);
+                return true;
+            } catch (error) {
+                console.error('❌ EmailJS error:', error);
+                
+                // Provide detailed error message
+                let errorMsg = 'Failed to send OTP email. ';
+                
+                if (error.text) {
+                    errorMsg += `Error: ${error.text}`;
+                } else if (error.message) {
+                    errorMsg += `Error: ${error.message}`;
+                }
+                
+                throw new Error(errorMsg);
+            }
+        }
+
+        // Show OTP verification modal
+        function showOTPModal(email) {
+            // Display email in modal
+            document.getElementById('otpEmailDisplay').textContent = email;
+            
+            // Reset OTP inputs
+            document.querySelectorAll('.otp-input').forEach(input => {
+                input.value = '';
+            });
+            
+            // Focus on first OTP input
+            document.querySelector('.otp-input[data-index="1"]').focus();
+            
+            // Start timer
+            startOTPTimer();
+            
+            // Show modal
+            const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+            otpModal.show();
+            
+            // Setup OTP input auto-focus
+            setupOTPInputs();
+        }
+
+        // Setup OTP input auto-focus
+        function setupOTPInputs() {
+            const otpInputs = document.querySelectorAll('.otp-input');
+            
+            otpInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    const index = parseInt(e.target.dataset.index);
+                    
+                    // Only allow numbers
+                    if (!/^\d*$/.test(value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // If a digit is entered, move to next input
+                    if (value.length === 1 && index < 6) {
+                        otpInputs[index].focus();
+                    }
+                    
+                    // Enable verify button when all inputs are filled
+                    const allFilled = Array.from(otpInputs).every(input => input.value.length === 1);
+                    document.getElementById('verifyOtpBtn').disabled = !allFilled;
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    const index = parseInt(e.target.dataset.index);
+                    
+                    // Handle backspace
+                    if (e.key === 'Backspace' && e.target.value === '' && index > 1) {
+                        otpInputs[index - 2].focus();
+                    }
+                });
+            });
+        }
+
+        // Start OTP timer
+        function startOTPTimer() {
+            clearInterval(otpTimer);
+            
+            const timerElement = document.getElementById('otpTimer');
+            const resendElement = document.getElementById('resendOtpText');
+            
+            // Show timer, hide resend
+            timerElement.style.display = 'block';
+            resendElement.style.display = 'none';
+            
+            let timeLeft = 120; // 2 minutes in seconds
+            
+            otpTimer = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                timeLeft--;
+                
+                if (timeLeft < 0) {
+                    clearInterval(otpTimer);
+                    timerElement.style.display = 'none';
+                    resendElement.style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        // Verify OTP
+        function verifyOTP() {
+            // Get OTP from inputs
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const enteredOTP = Array.from(otpInputs).map(input => input.value).join('');
+            
+            if (enteredOTP.length !== 6) {
+                alert('Please enter the complete 6-digit OTP');
+                return;
+            }
+            
+            // Retrieve stored OTP data
+            const storedOTPData = JSON.parse(localStorage.getItem('pending_otp') || 'null');
+            
+            if (!storedOTPData) {
+                alert('OTP session expired. Please sign up again.');
+                cancelOTP();
+                return;
+            }
+            
+            // Check if OTP is expired
+            if (Date.now() > storedOTPData.expiry) {
+                alert('OTP has expired. Please request a new one.');
+                return;
+            }
+            
+            // Verify OTP
+            if (enteredOTP === storedOTPData.code) {
+                // OTP verified successfully
+                clearInterval(otpTimer);
+                
+                // Create user account
+                createUserAccount();
+                
+            } else {
+                alert('Invalid OTP. Please try again.');
+                // Clear OTP inputs
+                otpInputs.forEach(input => input.value = '');
+                document.querySelector('.otp-input[data-index="1"]').focus();
+            }
+        }
+
+        // Create user account after OTP verification
+        function createUserAccount() {
+            if (!pendingUser) {
+                alert('Session expired. Please sign up again.');
+                cancelOTP();
+                return;
+            }
+            
+            const { name, email, password } = pendingUser;
+            
+            // Save user
+            users[email] = { name, password };
+            localStorage.setItem('benefit_users', JSON.stringify(users));
+            
+            // Set as current user
+            currentUser = {
+                name: name,
+                email: email,
+                avatar: name.charAt(0).toUpperCase()
+            };
+            localStorage.setItem('current_user', JSON.stringify(currentUser));
+            
+            // Clear OTP data
+            localStorage.removeItem('pending_otp');
+            pendingUser = null;
+            otpCode = null;
+            otpExpiry = null;
+            
+            // Update UI
+            showUserSection();
+            autoFillUserData(currentUser);
+            
+            // Close OTP modal
+            const otpModal = bootstrap.Modal.getInstance(document.getElementById('otpModal'));
+            if (otpModal) otpModal.hide();
+            
+            // Show success message
+            alert(`✅ Account verified successfully! Welcome, ${name}!`);
+        }
+
+        // Resend OTP
+        async function resendOTP() {
+            if (!pendingUser) {
+                alert('Session expired. Please sign up again.');
+                cancelOTP();
+                return;
+            }
+            
+            try {
+                // Generate new OTP
+                otpCode = generateOTP();
+                otpExpiry = Date.now() + 2 * 60 * 1000;
+                
+                // Update stored OTP
+                localStorage.setItem('pending_otp', JSON.stringify({
+                    code: otpCode,
+                    expiry: otpExpiry,
+                    email: pendingUser.email
+                }));
+                
+                // Send new OTP
+                await sendOTPEmail(pendingUser.email, pendingUser.name, otpCode);
+                
+                // Restart timer
+                startOTPTimer();
+                
+                // Show resend message
+                document.getElementById('resendOtpText').style.display = 'none';
+                document.getElementById('otpTimer').style.display = 'block';
+                
+                alert('New OTP sent to your email!');
+                
+            } catch (error) {
+                console.error('Failed to resend OTP:', error);
+                
+                // Fallback: Show OTP in console
+                console.log('New OTP for testing:', otpCode);
+                alert(`Failed to resend OTP via email. OTP for testing: ${otpCode}\nCheck browser console.`);
+                
+                // Restart timer anyway
+                startOTPTimer();
+                document.getElementById('resendOtpText').style.display = 'none';
+                document.getElementById('otpTimer').style.display = 'block';
+            }
+        }
+
+        // Cancel OTP verification
+        function cancelOTP() {
+            // Clear OTP data
+            localStorage.removeItem('pending_otp');
+            pendingUser = null;
+            otpCode = null;
+            otpExpiry = null;
+            clearInterval(otpTimer);
+            
+            // Close OTP modal
+            const otpModal = bootstrap.Modal.getInstance(document.getElementById('otpModal'));
+            if (otpModal) otpModal.hide();
+            
+            // Show signup modal again
+            showSignup();
+        }
+
+        // Logout function
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('current_user');
+            showLoginSection();
+            alert('You have been logged out.');
+        }
+
+        // ============================================
+        // ORIGINAL APPLICATION CODE (UNCHANGED)
+        // ============================================
+
+        const N8N_WEBHOOK_URL = 'https://mohitpillai12346.app.n8n.cloud/webhook/9f091cf5-2629-4342-8b07-41c42601028b';
+        let uploadedFiles = {
+            applicationPdf: null,
+            supportingPdf: null
+        };
+
+        // Handle Application PDF upload
+        document.getElementById('applicationPdf').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    alert('Please upload a PDF file');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File too large. Maximum 5MB.');
+                    return;
+                }
+                uploadedFiles.applicationPdf = file;
+                displayFile('applicationFileList', file, 'application');
+            }
+        });
+
+        // Handle Supporting PDF upload
+        document.getElementById('supportingPdf').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    alert('Please upload a PDF file');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File too large. Maximum 5MB.');
+                    return;
+                }
+                uploadedFiles.supportingPdf = file;
+                displayFile('supportingFileList', file, 'supporting');
+            }
+        });
+
+        function displayFile(containerId, file, type) {
+            const container = document.getElementById(containerId);
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            container.innerHTML = `
+                <div class="file-item">
+                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                    <span>${file.name} (${fileSize} MB)</span>
+                    <button type="button" class="btn btn-sm btn-link text-danger ms-2" onclick="removeFile('${type}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function removeFile(type) {
+            if (type === 'application') {
+                uploadedFiles.applicationPdf = null;
+                document.getElementById('applicationPdf').value = '';
+                document.getElementById('applicationFileList').innerHTML = '';
+            } else {
+                uploadedFiles.supportingPdf = null;
+                document.getElementById('supportingPdf').value = '';
+                document.getElementById('supportingFileList').innerHTML = '';
+            }
+        }
+
+        // ============================================
+        // MAIN FUNCTION: SEND TO N8N (REAL CONNECTION ONLY)
+        // ============================================
+        async function submitToN8n() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const issueType = document.getElementById('issueType').value;
+            
+            if (!name || !email || !issueType) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            if (!uploadedFiles.applicationPdf) {
+                alert('Please upload the Application Form PDF');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('errorBox').style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('email', email);
+                formData.append('issueType', issueType);
+                formData.append('applicationPdf', uploadedFiles.applicationPdf);
+                
+                if (uploadedFiles.supportingPdf) {
+                    formData.append('supportingPdf', uploadedFiles.supportingPdf);
+                }
+                
+                console.log('Sending to n8n...');
+                
+                // IMPORTANT: Only real connection to n8n
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('n8n error response:', errorText);
+                    throw new Error(`Server returned error: ${response.status}`);
+                }
+                
+                const responseText = await response.text();
+                console.log('n8n response:', responseText);
+                
+                // Only display what comes from n8n
+                displayResponse(responseText, name, email, issueType);
+                
+            } catch (error) {
+                console.error('Error connecting to n8n:', error);
+                showError(`Cannot connect to processing system. Error: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // DISPLAY RESPONSE (ONLY FROM N8N)
+        // ============================================
+        function displayResponse(responseText, name, email, issueType) {
+            const resultBox = document.getElementById('resultBox');
+            const resultHeader = document.getElementById('resultHeader');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultDescription = document.getElementById('resultDescription');
+            const applicantInfo = document.getElementById('applicantInfo');
+            const documentsInfo = document.getElementById('documentsInfo');
+            const applicationId = document.getElementById('applicationId');
+            
+            // Generate ID
+            const appId = 'APP-' + Date.now().toString().slice(-6);
+            applicationId.textContent = `Reference: ${appId}`;
+            
+            // Set basic info
+            applicantInfo.innerHTML = `
+                <strong>Name:</strong> ${name}<br>
+                <strong>Email:</strong> ${email}<br>
+                <strong>Assistance Type:</strong> ${issueType}
+            `;
+            
+            // Set documents info
+            let docsHtml = `✓ Application Form: ${uploadedFiles.applicationPdf.name}`;
+            if (uploadedFiles.supportingPdf) {
+                docsHtml += `<br>✓ Supporting Document: ${uploadedFiles.supportingPdf.name}`;
+            }
+            documentsInfo.innerHTML = docsHtml;
+            
+            // Process ONLY the n8n response (no demo data)
+            resultHeader.className = 'card-header bg-light';
+            resultTitle.innerHTML = 'Application Analysis';
+            resultTitle.className = 'h3 text-dark';
+            
+            // Try JSON first
+            try {
+                const data = JSON.parse(responseText);
+                
+                // Get explanation from n8n response
+                let explanation = '';
+                if (data.explanation) {
+                    explanation = data.explanation;
+                } else if (data.message) {
+                    explanation = data.message;
+                } else if (data.text) {
+                    explanation = data.text;
+                } else if (data.reason) {
+                    explanation = data.reason;
+                } else {
+                    // If no clear explanation field, show the whole JSON
+                    explanation = JSON.stringify(data, null, 2);
+                }
+                
+                // Display explanation from n8n
+                resultDescription.innerHTML = formatText(explanation);
+                
+                // Display factors from n8n
+                const factorsList = document.getElementById('factorsList');
+                if (data.factors && Array.isArray(data.factors)) {
+                    factorsList.innerHTML = data.factors.map(factor => `
+                        <div class="list-group-item">
+                            <strong>${factor.name || 'Factor'}:</strong> ${factor.description || ''}
+                        </div>
+                    `).join('');
+                } else {
+                    factorsList.innerHTML = `
+                        <div class="list-group-item">
+                            <em>Analysis complete</em>
+                        </div>
+                    `;
+                }
+                
+                // Display next steps from n8n
+                const nextSteps = document.getElementById('nextSteps');
+                if (data.nextSteps && Array.isArray(data.nextSteps)) {
+                    nextSteps.innerHTML = data.nextSteps.map(step => `
+                        <li class="list-group-item">${step}</li>
+                    `).join('');
+                } else {
+                    nextSteps.innerHTML = `
+                        <li class="list-group-item">Await official communication</li>
+                    `;
+                }
+                
+            } catch (e) {
+                // If not JSON, display as plain text from n8n
+                console.log('Displaying n8n response as plain text');
+                
+                // Display raw text from n8n
+                resultDescription.innerHTML = formatText(responseText);
+                
+                // Simple display for non-JSON responses
+                document.getElementById('factorsList').innerHTML = `
+                    <div class="list-group-item">
+                        <em>Response received</em>
+                    </div>
+                `;
+                
+                document.getElementById('nextSteps').innerHTML = `
+                    <li class="list-group-item">Review the explanation above</li>
+                `;
+            }
+            
+            // Show result
+            resultBox.style.display = 'block';
+            resultBox.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Simple text formatting
+        function formatText(text) {
+            if (!text) return '<p class="text-muted">No response from processing system.</p>';
+            
+            return text
+                .replace(/\\n/g, '\n')
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+
+        // ============================================
+        // ERROR HANDLING (REAL ERRORS ONLY)
+        // ============================================
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>System Error</h6>
+                    <p>${message}</p>
+                    <p class="mb-0 small">Check if n8n workflow is active and accepts multipart/form-data.</p>
+                </div>
+            `;
+            errorBox.style.display = 'block';
+        }
+
+        function resetForm() {
+            document.getElementById('benefitForm').reset();
+            uploadedFiles = { applicationPdf: null, supportingPdf: null };
+            document.getElementById('applicationFileList').innerHTML = '';
+            document.getElementById('supportingFileList').innerHTML = '';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.getElementById('benefitForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitToN8n();
+        });
+
+        console.log('Application portal ready - Connecting only to n8n');
+        console.log('Webhook:', N8N_WEBHOOK_URL);
+        console.log('✅ EmailJS configured with Service ID:', EMAILJS_CONFIG.SERVICE_ID);
+        console.log('✅ EmailJS configured with Template ID:', EMAILJS_CONFIG.TEMPLATE_ID);
+
+        // Test n8n connection on page load
+        async function testN8nConnection() {
+            try {
+                console.log('Testing n8n connection...');
+                const testResponse = await fetch(N8N_WEBHOOK_URL, { 
+                    method: 'HEAD',
+                    mode: 'no-cors' // Just to test if endpoint exists
+                });
+                console.log('✅ n8n endpoint reachable');
+            } catch (error) {
+                console.warn('⚠️ Cannot reach n8n endpoint. Make sure:');
+                console.warn('1. n8n workflow is active (green toggle)');
+                console.warn('2. Webhook URL is correct');
+            }
+        }
+
+        // Uncomment to test connection on load
+        // testN8nConnection();
+    </script>
 </body>
 </html>
